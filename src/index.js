@@ -3,16 +3,14 @@ const path = require('path')
 const http = require('http')
 const socketio = require('socket.io')
 const colors = require('colors')
-const Filter = require('bad-words')
+const {replaceBadWords} =require('./utils/badWords')
 const {prepareMessage, prepareLocationUrl}  =require('./utils/messages')
-const filter = new Filter()
 const {getAllUsers, addUserToRoom, getroomList, removeUserFromRoom, getUserFromSocketId} =require('./utils/users')
 
 
 const PORT = process.env.PORT || 5000
 const app = express()
 
-let activeUsers = new Map()
 
 const server = http.createServer(app)
 const io = socketio(server)
@@ -31,7 +29,9 @@ io.on('connection', (socket)=>{
     console.log('New User Connected'.gray)
 
     socket.on('sendMessage', (message, cb)=>{
-        if(filter.isProfane(message)) return cb('No profanity allowed')
+        
+        message = replaceBadWords(message)
+        // if(filter.isProfane(message)) return cb('No profanity allowed')
         let user = getUserFromSocketId(socket.id)
         
         io.to(user.roomName).emit('message', prepareMessage(message, user.userName))

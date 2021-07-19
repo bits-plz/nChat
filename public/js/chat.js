@@ -30,6 +30,27 @@ const createLocationTemplate = (pos) =>{
     return Mustache.render(googleLocationUrlTemplate, {createdAt, googleMapLocationUrl, user})
 }
 
+const autoScroll = () =>{
+    const $newMessage = $messages.lastElementChild
+    const $newMessageMargin = parseInt(getComputedStyle($newMessage).marginBottom)
+
+    const newMessageHeight = $newMessage.offsetHeight + $newMessageMargin
+
+    const visibleHeight = $messages.offsetHeight
+
+    const containerHeight = $messages.scrollHeight
+
+    const scrolledOffset = $messages.scrollTop + visibleHeight
+    console.log(`${containerHeight-newMessageHeight}, ${scrolledOffset}`)
+    
+
+    if(containerHeight - newMessageHeight <= scrolledOffset){
+        $messages.scrollTop = $messages.scrollHeight
+    }
+
+
+}
+
 $messageBtn.addEventListener('click', (e)=>{
     e.preventDefault()
 
@@ -48,6 +69,7 @@ $messageBtn.addEventListener('click', (e)=>{
 socket.on('message',(message) =>{
     
     $messages.insertAdjacentHTML('beforeend', createmessageTemplate(message))
+    autoScroll()
 })
 
 $sendLoc.addEventListener('click', (e)=>{
@@ -67,6 +89,7 @@ $sendLoc.addEventListener('click', (e)=>{
 
 socket.on('recvLoc', pos=>{
     $messages.insertAdjacentHTML('beforeend', createLocationTemplate(pos))
+    autoScroll()
 })
 
 socket.emit('join', {username, roomName}, (error) =>{
