@@ -34,14 +34,14 @@ io.on('connection', (socket)=>{
         if(filter.isProfane(message)) return cb('No profanity allowed')
         let user = getUserFromSocketId(socket.id)
         
-        io.to(user.roomName).emit('message', prepareMessage(message))
+        io.to(user.roomName).emit('message', prepareMessage(message, user.userName))
         cb()
     })
 
     socket.on('sendLoc', (pos, cb)=>{
         let user = getUserFromSocketId(socket.id)
 
-        io.to(user.roomName).emit('recvLoc',{lat : pos.lat, long :pos.long, createdAt : new Date().getTime()})
+        io.to(user.roomName).emit('recvLoc',{  lat : pos.lat, long :pos.long, createdAt : new Date().getTime() , user: user.userName})
 
         return cb('Delivered')
     })    
@@ -49,14 +49,22 @@ io.on('connection', (socket)=>{
 
     socket.on('join', (options, callback) =>{
 
-        socket.emit('message', prepareMessage('Welcome !'))
+        socket.emit('message', prepareMessage('Welcome !', options.roomName))
     
         socket.join(options.roomName)
 
         let {error} = addUserToRoom(options.username, options.roomName,  socket.id)
         if(error) return callback(error)
 
-        socket.broadcast.to(options.roomName).emit('message', prepareMessage(`${options.username} has joined the chat`))
+        socket.broadcast.to(options.roomName).emit('message', prepareMessage(`${options.username} has joined the chat`, options.roomName))
+        
+        
+
+        io.to(options.roomName).emit('roomData', {
+            roomName : options.roomName,
+            participants  : getAllUsers(options.roomName)
+        })
+        
 
         callback()
 
@@ -66,12 +74,12 @@ io.on('connection', (socket)=>{
    
     socket.on('disconnect', () =>{
        let {userName, roomName} = removeUserFromRoom(socket.id)
-       if(userName && roomName) io.to(roomName).emit('message', prepareMessage(`${userName} has left the chat`))
-    })
-
-    socket.on('leftChat', () =>{
-        let {userName, roomName} = removeUserFromRoom(socket.id)
-        if(userName && roomName) io.to(roomName).emit('message', prepareMessage(`${userName} has left the chat`)) 
+      
+       if(userName && roomName) io.to(roomName).emit('message', prepareMessage(`${userName} has left the chat`, roomName,))
+       io.to(roomName).emit('roomData', {
+        roomName : roomName,
+        participants  : getAllUsers(roomName)
+        })
     })
 
 })

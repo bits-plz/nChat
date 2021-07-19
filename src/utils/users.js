@@ -22,9 +22,8 @@ const addUserToRoom = (user, room, id) =>{
 
     DB.get(room).add(user)
 
-    console.log(userDB)
     
-    return {'error' : ''}
+    return {'error' : null}
 }
 
 const getUserFromSocketId = (id) =>{
@@ -36,9 +35,6 @@ const removeUserFromRoom = (id) =>{
    let user = userDB.get(id)
    DB.get(user.roomName).delete(user.userName)
    userDB.delete(id)
-   console.log(DB.get(user.roomName))
-   console.log(user.userName, 'left the chat')
-
    return {userName : user.userName, roomName : user.roomName}
 }
 
@@ -47,11 +43,11 @@ const getroomList = (user) =>{
     DB.forEach(Room =>{
         if(Room.has(user)) roomList.push(Room)
     })
-    console.log(roomList)
+    
     return roomList   
 }
 const getAllUsers = (room) =>{
-    return DB.get(room)
+   if(room) return [...DB.get(room)]
 }
 
 module.exports = {
